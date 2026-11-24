@@ -77,6 +77,10 @@ The tests build a small synthetic mod library, save and log, so they need no Rim
 - The crash finder assumes the problem stays once the culprit is loaded. Crashes that depend on several mods at once can be reported as "interaction suspected" instead of a single name.
 - RimWorld's log has no clear "loaded successfully" line, so the app suggests marking a clean session as working and leaves the decision to you.
 
+## License
+
+MIT. See [LICENSE](LICENSE).
+
 ## Credits
 
 - Load-order rules come from the RimSort Community-Rules-Database. They are downloaded on request and not included here.
