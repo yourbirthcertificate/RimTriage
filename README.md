@@ -1,10 +1,45 @@
-# RimTriage
-
-Sort, diagnose, and recover your RimWorld mod lists.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <img alt="RimTriage: Sort, diagnose, and recover your RimWorld mod lists." src="assets/logo-light.png" width="640">
+  </picture>
+</p>
 
 RimTriage is a Windows desktop tool for people running very large RimWorld mod lists (it was built against 900+ mods on the 1.7 pre-release). It sorts the load order from the rules, and when the game stops loading it helps you find out why and get back to a list that works.
 
 > The app window and exe are still called "RimWorld Mod Applier" internally. The repo is RimTriage.
+
+## Screenshots
+
+All screenshots use a fictional demo install (made-up mods, log and saves), not a real colony.
+
+**Sort the list.** Tick what is compatible, see what is out of date, unverified or missing, and spot what updated recently.
+
+![The Mods page](docs/screenshots/mods.png)
+
+**Know why every mod sits where it does.** Each row shows the rule behind its position.
+
+![The Load order page](docs/screenshots/load-order.png)
+
+**Find the cause.** The log reader traces the first fatal error back to a mod and ranks the rest.
+
+![The log reader](docs/screenshots/log-reader.png)
+
+**See what changed since it last worked.** Updates, new mods and moves since a baseline you marked as working.
+
+![What changed](docs/screenshots/what-changed.png)
+
+| Dependency finder | Crash finder |
+| --- | --- |
+| ![Dependency finder](docs/screenshots/dependencies.png) | ![Crash finder](docs/screenshots/crash-finder.png) |
+
+| Saves | Apply preview |
+| --- | --- |
+| ![Saves page](docs/screenshots/saves.png) | ![Apply preview](docs/screenshots/apply-preview.png) |
+
+There is also a light theme:
+
+![Light theme](docs/screenshots/mods-light.png)
 
 ## What it does
 
@@ -63,6 +98,16 @@ python tests\test_core.py
 ```
 
 The tests build a small synthetic mod library, save and log, so they need no RimWorld install.
+
+## Pictures
+
+The logo, the GitHub social preview and every screenshot are generated from the demo install in `tools/demo_world.py`:
+
+```powershell
+python tools\make_images.py
+```
+
+A window flashes on screen while it runs. Nothing from a real machine is used.
 
 ## What it touches
 
