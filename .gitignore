@@ -1,0 +1,23 @@
+# build output
+dist/
+build/
+*.exe
+*.spec
+__pycache__/
+*.pyc
+
+# your data, created next to the app when it runs
+settings.json
+profiles/
+history/
+tags.json
+user_rules.json
+diagnose_rules.json
+advisor_prompt.txt
+communityRules.json
+
+# editors and OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
