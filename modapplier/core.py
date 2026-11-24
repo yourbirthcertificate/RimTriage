@@ -1,4 +1,5 @@
 """Core logic for RimWorld Mod Applier. No UI code in here."""
+import csv
 import heapq
 import json
 import os
@@ -882,12 +883,22 @@ def write_config(config, order_ids, version_str):
 
 
 def game_running():
+    """Return true if RimWorld is running or the process check is inconclusive."""
+    names = {"rimworldwin64.exe", "rimworld.exe"}
     try:
-        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq RimWorldWin64.exe"], capture_output=True,
-                             text=True, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
-        return "RimWorldWin64.exe" in out
-    except Exception:
-        return False
+        result = subprocess.run(
+            ["tasklist", "/FO", "CSV", "/NH"],
+            capture_output=True, text=True, errors="replace", check=True, timeout=3,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        rows = [row for row in csv.reader(result.stdout.splitlines(), strict=True) if row]
+    except (OSError, subprocess.SubprocessError, csv.Error):
+        return True
+    # An unfiltered Windows task list always has processes. Empty or unexpected
+    # output does not establish that it is safe to change the active mod list.
+    if not rows or any(len(row) < 2 or not row[1].isascii() or not row[1].isdigit() for row in rows):
+        return True
+    return any(row[0].casefold() in names for row in rows)
 
 
 def profile_path(name):

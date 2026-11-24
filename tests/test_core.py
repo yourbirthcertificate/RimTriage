@@ -1,9 +1,11 @@
 """Portable tests. They build a tiny synthetic mod library, save and log in a temp folder, so they need no RimWorld install.
 
 Run with:  python -m pytest tests      or      python tests/test_core.py"""
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -43,6 +45,63 @@ def library():
     mk(root, "11", "cyc.p", "Cycle P", after=["cyc.q"])
     mk(root, "12", "cyc.q", "Cycle Q", after=["cyc.p"])
     return core.scan(None, str(root), "1.7")
+
+
+def test_running_game_guard_recognizes_both_windows_executables():
+    for exe in ("RimWorldWin64.exe", "RIMWORLD.EXE"):
+        output = '"explorer.exe","20","Console","1","1,000 K"\r\n' + (
+            '"%s","42","Console","1","20,000 K"\r\n' % exe)
+        with patch.object(core.subprocess, "run", return_value=subprocess.CompletedProcess(
+                [], 0, stdout=output)) as tasklist:
+            assert core.game_running()
+            assert tasklist.call_args.args[0] == ["tasklist", "/FO", "CSV", "/NH"]
+            assert tasklist.call_args.kwargs["check"]
+
+
+def test_running_game_guard_matches_image_name_not_substrings():
+    output = '"RimWorld.exe.backup","42","Console","1","20,000 K"\r\n'
+    with patch.object(core.subprocess, "run", return_value=subprocess.CompletedProcess(
+            [], 0, stdout=output)):
+        assert not core.game_running()
+
+
+def test_running_game_guard_blocks_when_process_status_is_unknown():
+    for error in (FileNotFoundError(), subprocess.CalledProcessError(1, "tasklist"),
+                  subprocess.TimeoutExpired("tasklist", 3)):
+        with patch.object(core.subprocess, "run", side_effect=error):
+            assert core.game_running()
+    for output in ("", "unexpected tasklist output", '"unclosed quote'):
+        with patch.object(core.subprocess, "run", return_value=subprocess.CompletedProcess(
+                [], 0, stdout=output)):
+            assert core.game_running()
+
+
+def test_command_line_writer_refuses_while_the_game_runs():
+    import argparse
+    import rimworld_mod_applier as cli
+    root = Path(tempfile.mkdtemp()) / "workshop"
+    root.mkdir()
+    mk(root, "1", "brrainz.harmony", "Harmony", dll="0Harmony")
+    mk(root, "2", "mod.a", "Mod A", deps=["brrainz.harmony"])
+    cfg = Path(tempfile.mkdtemp()) / "ModsConfig.xml"
+    core.write_config(cfg, ["old.mod"], "1.7")
+    before = cfg.read_text()
+    s = {"game_dir": "", "workshop_dir": str(root), "config_path": str(cfg)}
+
+    def args(dry):
+        return argparse.Namespace(profile=None, update_rules=False, no_community=True, mode="balanced", show=0, dry_run=dry)
+    with patch.object(core, "game_running", return_value=True):
+        try:
+            cli.run_cli(args(False), s)
+            raise AssertionError("the command line wrote while the game was running")
+        except SystemExit as e:
+            assert e.code == 1
+        assert cfg.read_text() == before and not core.list_backups(cfg)       # nothing written, nothing backed up
+        cli.run_cli(args(True), s)                                            # --dry-run still works
+        assert cfg.read_text() == before
+    with patch.object(core, "game_running", return_value=False):
+        cli.run_cli(args(False), s)
+    assert core.read_active(cfg) == ["brrainz.harmony", "mod.a"] and len(core.list_backups(cfg)) == 1
 
 
 def test_scan_and_parse():

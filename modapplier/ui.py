@@ -24,6 +24,8 @@ PAGES = [("mods", "Mods"), ("order", "Order"), ("deps", "Dependencies"), ("probl
 KIND_LABEL = {"missing": "Missing", "conflict": "Conflict", "rule": "Rule", "dropped": "Dropped rule", "outdated": "Outdated", "skipped": "Skipped",
               "enable": "Needs", "unavailable": "Unavailable"}
 _ICONS = []
+# the process check fails safe: if Windows can't list processes, the game counts as running
+NOT_SURE = " If it is already closed, Windows could not confirm that, so the app is playing safe. Try again in a moment."
 
 
 # ------------------------------------------------------------------ helpers
@@ -1080,7 +1082,7 @@ class ProfilesPage(QWidget):
         if not f:
             return
         if core.game_running():
-            QMessageBox.critical(self, "RimWorld is running", "Close RimWorld first.")
+            QMessageBox.critical(self, "RimWorld is running", "Close RimWorld first." + NOT_SURE)
             return
         if QMessageBox.question(self, "Restore backup", "Replace ModsConfig.xml with the backup from %s?\nYour current file is backed up first." % it.text()) == QMessageBox.Yes:
             cfg = Path(self.st.s["config_path"])
@@ -1884,7 +1886,7 @@ class CrashTab(QWidget):
         so touching it while the game runs would be lost or would spoil the test."""
         if core.game_running():
             QMessageBox.warning(self, "RimWorld is running", "Close RimWorld first. The game rewrites ModsConfig.xml when it exits, "
-                                "so changing it now would be lost or would spoil the test.")
+                                "so changing it now would be lost or would spoil the test." + NOT_SURE)
             return False
         return True
 
@@ -1991,7 +1993,7 @@ class CrashTab(QWidget):
 
     def answer(self, broken):
         if core.game_running():
-            QMessageBox.information(self, "RimWorld is running", "Close the game, then answer.")
+            QMessageBox.information(self, "RimWorld is running", "Close the game, then answer." + NOT_SURE)
             return
         if self.mode == "confirm":
             return self.show_result(confirmed=broken)
@@ -3153,7 +3155,7 @@ class MainWindow(QMainWindow):
     def apply(self, launch):
         st, s = self.st, self.st.s
         if core.game_running():
-            QMessageBox.critical(self, "RimWorld is running", "Close RimWorld first, then apply.")
+            QMessageBox.critical(self, "RimWorld is running", "Close RimWorld first, then apply." + NOT_SURE)
             return
         if st.config_changed_elsewhere():
             box = QMessageBox(self)

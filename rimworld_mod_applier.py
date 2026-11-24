@@ -35,6 +35,10 @@ def run_cli(a, s):
     if a.dry_run:
         print("Dry run: nothing written.")
         return
+    if core.game_running():  # RimWorld rewrites ModsConfig.xml on exit; also refuses when Windows can't confirm the game is closed
+        print("RimWorld is running, or Windows could not confirm it is closed. Close the game and run this again. "
+              "ModsConfig.xml was not changed. (--dry-run still works.)")
+        sys.exit(1)
     print("Backup:", core.backup_config(s["config_path"]))
     core.write_config(s["config_path"], [p for p, _ in plan.order], core.game_version_str(s["game_dir"]))
     print("Wrote", s["config_path"])
